@@ -1,6 +1,8 @@
 import argparse
 import lpips
+import os
 import pandas as pd 
+import numpy as np
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-p','--path', type=str, default='', help='path to guidance file')
@@ -11,6 +13,8 @@ parser.add_argument('--use_gpu', action='store_true', help='turn on flag to use 
 parser.add_argument('--save_csv', action='store_true', help='save to CSV')
 parser.add_argument('-o','--out', type=str, default='./out/', help='path to save files')
 opt = parser.parse_args()
+
+os.makedirs(opt.out, exist_ok=True)
 
 data = []
 
@@ -37,19 +41,21 @@ for (ff,file) in enumerate(files[:-1]):
 
 	# Compute distance
 	dist01 = loss_fn.forward(img0,img1)
-	print('%s: %.3f'%(file,dist01))
-	data.append[[file,dist01]]
+	#print('%s: %.3f'%(file,dist01))
+	data.append([file,dist01.item()])
 
 
 df = pd.DataFrame(data, columns = ['Filename', 'Distance'])
-sorted_df = df.sort_values(by=['Distance'], ascending=False)
-print(sorted_df)
+sorted_df = df.sort_values(by=['Distance'])
+print(sorted_df.to_string())
 
+tfile = open('distances.txt', 'a')
+tfile.write(sorted_df.to_string())
+tfile.close()
 
 if(opt.save_csv):
-	sorted_df.to_csv(os.path.join(opt.folder,'distances.csv'))
-else:
-	np.savetxt('distances.txt', sorted_df)
+	sorted_df.to_csv('distances.csv', encoding='utf-8', index = False, header=True)
+
 
 
 
