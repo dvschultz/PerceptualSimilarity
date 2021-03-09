@@ -41,7 +41,7 @@ for (ff,file) in enumerate(files[:-1]):
 
 	# Compute distance
 	dist01 = loss_fn.forward(img0,img1)
-	#print('%s: %.3f'%(file,dist01))
+	print('%s: %.3f'%(file,dist01))
 	data.append([file,dist01.item()])
 
 
