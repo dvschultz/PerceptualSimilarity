@@ -24,45 +24,51 @@ loss_fn = lpips.LPIPS(net=opt.net,version=opt.version)
 if(opt.use_gpu):
 	loss_fn.cuda()
 
-# Load images
-img0 = lpips.im2tensor(lpips.load_image(opt.path)) # RGB image from [-1,1]
+smallest_file = opt.path
+smallest_dist = 3.0
 
-
-if(opt.use_gpu):
-	img0 = img0.cuda()
+data.append([smallest_file,0.0])
+img0 = lpips.im2tensor(lpips.load_image(os.path.join(opt.folder,smallest_file)))
 
 files = os.listdir(opt.folder)
-smallest_dist = 3.0
-smallest_file = ''
+files.remove(smallest_file)
 
-for (ff,file) in enumerate(files[:-1]):
-	img1 = lpips.im2tensor(lpips.load_image(os.path.join(opt.folder,file))) # RGB image from [-1,1]
+while (len(files) > 1):
+	print(' ')
+	print('files left: '+ str(len(files)))
+	print('----------------------')
 
-	if(opt.use_gpu):
-		img1 = img1.cuda()
+	for (ff,file) in enumerate(files[:-1]):
+		img1 = lpips.im2tensor(lpips.load_image(os.path.join(opt.folder,file))) # RGB image from [-1,1]
 
-	# Compute distance
-	dist01 = loss_fn.forward(img0,img1)
-	print('%s: %.3f'%(file,dist01))
+		if(opt.use_gpu):
+			img0 = img0.cuda()
+			img1 = img1.cuda()
 
-	if((dist01!= 0.0) and (dist01 < smallest_dist)):
-		smallest_dist = dist01
-		smallest_file = file
+		# Compute distance
+		dist01 = loss_fn.forward(img0,img1)
+		# print('%s: %.3f'%(file,dist01))
+
+		if((dist01!= 0.0) and (dist01 < smallest_dist)):
+			smallest_dist = dist01.item()
+			smallest_file = file
 
 	
-	data.append([file,dist01.item()])
 
+	data.append([smallest_file,smallest_dist])
+	#reset values
+	smallest_dist = 3.0
+	img0 = lpips.im2tensor(lpips.load_image(os.path.join(opt.folder,smallest_file)))
+	files.remove(smallest_file)
 
 df = pd.DataFrame(data, columns = ['Filename', 'Distance'])
-sorted_df = df.sort_values(by=['Distance'])
-print(sorted_df.to_string())
 
 tfile = open('distances.txt', 'a')
-tfile.write(sorted_df.to_string())
+tfile.write(df.to_string())
 tfile.close()
 
 if(opt.save_csv):
-	sorted_df.to_csv('distances.csv', encoding='utf-8', index = False, header=True)
+	df.to_csv('distances.csv', encoding='utf-8', index = False, header=True)
 
 
 
