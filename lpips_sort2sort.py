@@ -12,6 +12,7 @@ parser.add_argument('-n','--net', type=str, default='alex', help='alex or vgg')
 parser.add_argument('--use_gpu', action='store_true', help='turn on flag to use GPU')
 parser.add_argument('--save_csv', action='store_true', help='save to CSV')
 parser.add_argument('-o','--out', type=str, default='./out/', help='path to save files')
+parser.add_argument('-m','--max', type=int, default=None, help='max files to find')
 opt = parser.parse_args()
 
 os.makedirs(opt.out, exist_ok=True)
@@ -33,7 +34,12 @@ img0 = lpips.im2tensor(lpips.load_image(os.path.join(opt.folder,smallest_file)))
 files = os.listdir(opt.folder)
 files.remove(smallest_file)
 
-while (len(files) > 1):
+if opt.max:
+	count = len(files) - opt.max
+else:
+	count = 1
+
+while (len(files) > count):
 	print(' ')
 	print('files left: '+ str(len(files)))
 	print('----------------------')
